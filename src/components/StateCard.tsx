@@ -1,21 +1,30 @@
 // src/components/StateCard.tsx
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import type { Estado } from "../types/ibge";
 import { FLAGS } from "../constants/flags";
 
 interface Props {
   item: Estado;
   onPress: (item: Estado) => void;
-  cardWidth: number; // fornecido pela Home
+  cardStyle?: StyleProp<ViewStyle>; // largura vinda da Home
 }
 
-export default function StateCard({ item, onPress, cardWidth }: Props) {
+export default function StateCard({ item, onPress, cardStyle }: Props) {
   const flag = FLAGS[item.sigla as keyof typeof FLAGS] ?? null;
+  const regSigla = item.regiao?.sigla ?? "—";
 
   return (
     <TouchableOpacity
-      style={[styles.card, { width: cardWidth }]}
+      style={[styles.card, cardStyle]}
       onPress={() => onPress(item)}
       activeOpacity={0.9}
     >
@@ -33,8 +42,17 @@ export default function StateCard({ item, onPress, cardWidth }: Props) {
       )}
 
       <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={1}>{item.nome}</Text>
-        <Text style={styles.subtitle} numberOfLines={1}>Região: {item.regiao.nome}</Text>
+        {/* Título maior e com 2 linhas */}
+        <Text style={styles.title} numberOfLines={2}>
+          {item.nome}
+        </Text>
+
+        <View style={styles.metaRow}>
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>{regSigla}</Text>
+          </View>
+          <Text style={styles.ufText}>{item.sigla}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -42,27 +60,44 @@ export default function StateCard({ item, onPress, cardWidth }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    height: 86,
+    height: 100, // um pouco mais alto p/ caber 2 linhas
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    backgroundColor: "#f7f7f7",
-    borderRadius: 14,
+    padding: 12,
+    backgroundColor: "#FFFFFF", // branco p/ destacar no fundo cinza
+    borderRadius: 16,
+    // sombra mais evidente (ainda suave)
     shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowOpacity: 0.10,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
-  flag: { width: 42, height: 30, borderRadius: 4, marginRight: 10 },
+
+  flag: { width: 44, height: 32, borderRadius: 6, marginRight: 12 },
+
   badge: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: "#e6eefc",
-    alignItems: "center", justifyContent: "center",
-    marginRight: 10,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#E6EEFC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
   },
-  badgeText: { fontSize: 16, fontWeight: "700" },
+  badgeText: { fontSize: 16, fontWeight: "700", color: "#111827" },
+
   info: { flex: 1, minWidth: 0 },
-  title: { fontSize: 14, fontWeight: "700", color: "#1b1b1b" },
-  subtitle: { marginTop: 2, fontSize: 12, color: "#666" },
+  // Título um pouco maior
+  title: { fontSize: 15, fontWeight: "700", color: "#111827", lineHeight: 20 },
+  metaRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
+  pill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: "#E9EDF9",
+    marginRight: 8,
+  },
+  pillText: { fontSize: 11, fontWeight: "700", color: "#3B4B82" },
+  ufText: { fontSize: 11, color: "#6B7280" },
 });

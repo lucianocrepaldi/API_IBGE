@@ -1,4 +1,3 @@
-// src/screens/HomeScreen.tsx
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -19,23 +18,34 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  // --- Grid: 3 colunas em native; responsivo no web ---
   const { width } = useWindowDimensions();
-  const cols =
-    Platform.OS === "web"
-      ? width < 480
-        ? 1
-        : width < 900
-        ? 2
-        : width < 1300
-        ? 3
-        : 4
-      : 3;
+  const isWeb = Platform.OS === "web";
 
-  const GAP = 12;
-  const HPAD = 12; // padding horizontal
+  // 2 colunas em smartphones; 3+ em telas maiores / web
+  const cols = isWeb
+    ? width < 480
+      ? 1
+      : width < 900
+      ? 2
+      : width < 1300
+      ? 3
+      : 4
+    : width < 600
+    ? 2
+    : 3;
+
+  // Espaçamentos
+  const GAP = 16;
+  const HPAD = 16;
+
+  // Largura de cada card considerando APENAS o padding do container e o gap entre colunas
   const available = Math.max(0, width - HPAD * 2 - GAP * (cols - 1));
   const CARD_WIDTH = Math.floor(available / cols);
+
+  // Estilo dinâmico (sem inline) para largura do card
+  const dyn = StyleSheet.create({
+    cardW: { width: CARD_WIDTH },
+  });
 
   async function load() {
     try {
@@ -61,31 +71,35 @@ export default function HomeScreen() {
         `Municípios: ${municipios.slice(0, 10).map((m) => m.nome).join(", ")}…` +
         `\n(+${Math.max(0, municipios.length - 10)} outros)`;
 
-      if (Platform.OS === "web") {
-        window.alert(`${estado.nome} (${estado.sigla})\n${body}`);
-      } else {
-        Alert.alert(`${estado.nome} (${estado.sigla})`, body);
-      }
+      if (isWeb) window.alert(`${estado.nome} (${estado.sigla})\n${body}`);
+      else Alert.alert(`${estado.nome} (${estado.sigla})`, body);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (Platform.OS === "web") window.alert(`Falha ao carregar municípios.\n${msg}`);
+      if (isWeb) window.alert(`Falha ao carregar municípios.\n${msg}`);
       else Alert.alert("Erro", `Falha ao carregar municípios.\n${msg}`);
     }
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Estados do Brasil (IBGE)</Text>
+      {/* Cabeçalho */}
+      <View style={styles.headerWrap}>
+        <Text style={styles.headerTitle}>Estados do Brasil (IBGE)</Text>
+        <Text style={styles.headerSubtitle}>SALVE O CAPITÃO</Text>
+      </View>
 
+      {/* Lista */}
       <FlatList
-        key={`cols-${cols}`} // força remontar quando o nº de colunas muda (evita erro)
+        key={`cols-${cols}`}
         data={estados}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
-          <StateCard item={item} onPress={handlePress} cardWidth={CARD_WIDTH} />
+          <StateCard item={item} onPress={handlePress} cardStyle={dyn.cardW} />
         )}
         numColumns={cols}
+        // sem padding aqui; apenas gap horizontal + margem inferior
         columnWrapperStyle={cols > 1 ? styles.row : undefined}
+        // o padding lateral fica SOMENTE no contentContainerStyle
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
@@ -106,23 +120,40 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  header: {
-    fontSize: 18,
-    fontWeight: "800",
-    marginTop: 12,
-    marginBottom: 8,
+  // Fundo suave para destacar os cards
+  container: { flex: 1, backgroundColor: "#F2F4F7" },
+
+  headerWrap: {
     paddingHorizontal: 16,
-  },
-  row: {
-    paddingHorizontal: 12,
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  listContent: {
     paddingTop: 12,
-    paddingBottom: 24,
-    paddingHorizontal: 12,
+    paddingBottom: 6,
   },
-  empty: { textAlign: "center", marginTop: 24, color: "#666" },
+  headerTitle: {
+    fontSize: 20, // maior
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  headerSubtitle: {
+    marginTop: 2,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#64748B",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+
+  // linha: apenas gap; sem padding horizontal
+  row: {
+    gap: 16,           // espaçamento horizontal IGUAL ao vertical
+    marginBottom: 16,  // espaçamento vertical entre fileiras
+  },
+
+  // padding lateral/global da lista
+  listContent: {
+    paddingHorizontal: 16, // controla as bordas esquerda/direita
+    paddingBottom: 28,
+    paddingTop: 8,
+  },
+
+  empty: { textAlign: "center", marginTop: 24, color: "#64748B" },
 });
